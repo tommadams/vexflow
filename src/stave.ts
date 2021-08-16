@@ -717,18 +717,17 @@ export class Stave extends Element {
     let y;
 
     // Render lines
+    this.applyStyle();
+    ctx.beginPath();
     for (let line = 0; line < num_lines; line++) {
-      y = this.getYForLine(line);
-
-      this.applyStyle();
       if (this.options.line_config[line].visible) {
-        ctx.beginPath();
+        y = this.getYForLine(line);
         ctx.moveTo(x, y);
         ctx.lineTo(x + width, y);
-        ctx.stroke();
       }
-      this.restoreStyle();
     }
+    ctx.stroke();
+    this.restoreStyle();
 
     // Draw the modifiers (bar lines, coda, segno, repeat brackets, etc.)
     for (let i = 0; i < this.modifiers.length; i++) {

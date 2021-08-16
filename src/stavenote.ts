@@ -121,7 +121,7 @@ export class StaveNote extends StemmableNote {
   }
   static get minNoteheadPadding(): number {
     const musicFont = Flow.DEFAULT_FONT_STACK[0];
-    return musicFont.lookupMetric('glyphs.noteHead.minPadding');
+    return musicFont.getMetrics().glyphs.noteHead.minPadding;
   }
 
   // ## Static Methods
@@ -1151,6 +1151,7 @@ export class StaveNote extends StemmableNote {
 
   // Draw all key modifiers
   drawModifiers(): void {
+    if (this.modifiers.length == 0) return;
     const ctx = this.checkContext();
     ctx.openGroup('modifiers');
     for (let i = 0; i < this.modifiers.length; i++) {

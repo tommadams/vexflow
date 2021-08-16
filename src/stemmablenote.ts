@@ -132,20 +132,20 @@ export abstract class StemmableNote extends Note {
       const glyph = this.getBaseCustomNoteHeadGlyph() || this.getGlyph();
 
       // Get the font-specific customizations for the note heads.
-      const offsets = this.musicFont.lookupMetric(`stem.noteHead.${glyph.code_head}`, {
-        offsetYBaseStemUp: 0,
-        offsetYTopStemUp: 0,
-        offsetYBaseStemDown: 0,
-        offsetYTopStemDown: 0,
-      });
+      const noteHeadMetrics = this.musicFont.getMetrics().stem?.noteHead;
+      let offsets = noteHeadMetrics ? noteHeadMetrics[glyph.code_head] : undefined
 
-      // Configure the stem to use these offsets.
-      this.stem.setOptions({
-        stem_up_y_offset: offsets.offsetYTopStemUp, // glyph.stem_up_y_offset,
-        stem_down_y_offset: offsets.offsetYTopStemDown, // glyph.stem_down_y_offset,
-        stem_up_y_base_offset: offsets.offsetYBaseStemUp, // glyph.stem_up_y_base_offset,
-        stem_down_y_base_offset: offsets.offsetYBaseStemDown, // glyph.stem_down_y_base_offset,
-      });
+      if (offsets !== undefined) {
+        // Configure the stem to use these offsets.
+        this.stem.setOptions({
+          stem_up_y_offset: offsets.offsetYTopStemUp, // glyph.stem_up_y_offset,
+          stem_down_y_offset: offsets.offsetYTopStemDown, // glyph.stem_down_y_offset,
+          stem_up_y_base_offset: offsets.offsetYBaseStemUp, // glyph.stem_up_y_base_offset,
+          stem_down_y_base_offset: offsets.offsetYBaseStemDown, // glyph.stem_down_y_base_offset,
+        });
+      } else {
+        this.stem.setOptions(undefined);
+      }
     }
 
     // Reset and reformat everything.
