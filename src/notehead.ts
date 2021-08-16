@@ -224,8 +224,8 @@ export class NoteHead extends Note {
     // For a more natural displaced notehead, we adjust the displacement amount
     // by half the stem width in order to maintain a slight overlap with the stem
     const displacementStemAdjustment = Stem.WIDTH / 2;
-    const fontShift = this.musicFont.lookupMetric('notehead.shiftX', 0) * this.stem_direction;
-    const displacedFontShift = this.musicFont.lookupMetric('noteHead.displaced.shiftX', 0) * this.stem_direction;
+    const fontShift = (this.musicFont.getMetrics().notehead?.shiftX || 0) * this.stem_direction;
+    const displacedFontShift = (this.musicFont.getMetrics().noteHead?.displaced?.shiftX || 0) * this.stem_direction;this.musicFont.lookupMetric('noteHead.displaced.shiftX', 0) * this.stem_direction;
 
     return (
       x +

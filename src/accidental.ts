@@ -74,11 +74,11 @@ export class Accidental extends Modifier {
       lineSpace?: number;
     };
 
-    const musicFont = Flow.DEFAULT_FONT_STACK[0];
-    const noteheadAccidentalPadding = musicFont.lookupMetric('accidental.noteheadAccidentalPadding');
+    const fontMetrics = Flow.DEFAULT_FONT_STACK[0].getMetrics();
+    const noteheadAccidentalPadding = fontMetrics.accidental.noteheadAccidentalPadding;
     const leftShift = state.left_shift + noteheadAccidentalPadding;
-    const accidentalSpacing = musicFont.lookupMetric('accidental.accidentalSpacing');
-    const additionalPadding = musicFont.lookupMetric('accidental.leftPadding'); // padding to the left of all accidentals
+    const accidentalSpacing = fontMetrics.accidental.accidentalSpacing;
+    const additionalPadding = fontMetrics.accidental.leftPadding; // padding to the left of all accidentals
 
     // If there are no accidentals, we needn't format their positions
     if (!accidentals || accidentals.length === 0) return;

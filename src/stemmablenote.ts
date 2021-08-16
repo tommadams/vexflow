@@ -234,7 +234,7 @@ export abstract class StemmableNote extends Note {
   }
 
   hasFlag(): boolean {
-    return Flow.getGlyphProps(this.duration).flag && !this.beam;
+    return this.glyph.flag && !this.beam;
   }
 
   /** Post formats the note. */

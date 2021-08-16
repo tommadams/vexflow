@@ -379,9 +379,6 @@ export class StaveNote extends StemmableNote {
     this.clef = noteStruct.clef ?? 'treble';
     this.octave_shift = noteStruct.octave_shift ?? 0;
 
-    // Pull note rendering properties
-    this.glyph = Flow.getGlyphProps(this.duration, this.noteType);
-
     if (!this.glyph) {
       throw new RuntimeError(
         'BadArguments',
@@ -418,7 +415,6 @@ export class StaveNote extends StemmableNote {
     } else {
       this.setStemDirection(noteStruct.stem_direction ?? Stem.UP);
     }
-    this.reset();
     this.buildFlag();
   }
 
