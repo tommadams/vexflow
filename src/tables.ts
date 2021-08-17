@@ -322,6 +322,16 @@ const accidentals: Record<string, { code: string; parenRightPaddingAdjustment: n
 // eslint-disable-next-line
 let duration_codes: Record<string, any>;
 
+let noteValues: Record<string, {
+        index: number;
+        int_val?: number;
+        accidental?: string;
+        rest?: boolean;
+        octave?: number;
+        code?: string;
+        shift_right?: number;
+      }>;
+
 export const Tables = {
   STEM_WIDTH: 1.5,
   STEM_HEIGHT: 35,
@@ -380,18 +390,7 @@ export const Tables = {
   */
   // eslint-disable-next-line
   keyProperties(key: string, clef?: string, params?: any): any {
-    const noteValues: Record<
-      string,
-      {
-        index: number;
-        int_val?: number;
-        accidental?: string;
-        rest?: boolean;
-        octave?: number;
-        code?: string;
-        shift_right?: number;
-      }
-    > = {
+    noteValues = noteValues || {
       C: { index: 0, int_val: 0 },
       CN: { index: 0, int_val: 0, accidental: 'n' },
       'C#': { index: 0, int_val: 1, accidental: '#' },
