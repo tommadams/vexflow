@@ -19,8 +19,7 @@ export type TriggerFunction = (state?: { matches: Match[] }) => void;
 
 export interface Rule {
   // Lexer Rules
-  token?: string; // The token property is a string that is compiled into a RegExp.
-  noSpace?: boolean;
+  token?: RegExp; // A regular expresssion that matches one token.
 
   // Parser Rules
   expect?: RuleFunction[];
@@ -108,10 +107,9 @@ export class Parser {
 
   // Look for `token` in this.line[this.pos], and return success
   // if one is found. `token` is specified as a regular expression.
-  matchToken(token: string, noSpace: boolean = false): Result {
-    const regexp = noSpace ? new RegExp('^((' + token + '))') : new RegExp('^((' + token + ')\\s*)');
+  matchToken(token: RegExp): Result {
     const workingLine = this.line.slice(this.pos);
-    const result = workingLine.match(regexp);
+    const result = workingLine.match(token);
     if (result !== null) {
       return {
         success: true,
@@ -222,12 +220,12 @@ export class Parser {
     // - parser rules produce expressions which may trigger code via the
     //   { run: () => ... } trigger functions in easyscore.ts.
     //   These functions build the VexFlow objects that are displayed on screen.
-    const rule: Rule = ruleFunc.bind(this.grammar)();
+    const rule: Rule = ruleFunc.call(this.grammar);
     if (rule.token) {
       // A lexer rule has a `token` property.
       // Base case: parse the regex and throw an error if the
       // line doesn't match.
-      result = this.matchToken(rule.token, rule.noSpace === true);
+      result = this.matchToken(rule.token);
       if (result.success) {
         // Token match! Update position and throw away parsed portion
         // of string.

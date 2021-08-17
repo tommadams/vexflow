@@ -21,6 +21,32 @@ function L(...args: any[]): void {
   if (EasyScore.DEBUG) log('Vex.Flow.EasyScore', args);
 }
 
+
+function tokenRule(pattern: string): Rule {
+  return { token: new RegExp(`^((${pattern})\\s*)`) };
+}
+
+const TOKENS: Record<string, Rule> = {
+  KEY: tokenRule('[a-zA-Z][a-zA-Z0-9]*'),
+  DVAL: tokenRule('["][^"]*["]'),
+  SVAL: tokenRule("][^']*[']"),
+  NOTENAME: tokenRule('[a-gA-G]'),
+  OCTAVE: tokenRule('[0-9]+'),
+  ACCIDENTALS: tokenRule('bbs|bb|bss|bs|b|db|d|##|#|n|\\+\\+-|\\+-|\\+\\+|\\+|k|o'),
+  DURATIONS: tokenRule('[0-9whq]+'),
+  TYPES: tokenRule('[rRsSxX]'),
+  LPAREN: tokenRule('[(]'),
+  RPAREN: tokenRule('[)]'),
+  COMMA: tokenRule('[,]'),
+  DOT: tokenRule('[.]'),
+  SLASH: tokenRule('[/]'),
+  MAYBESLASH: tokenRule('[/]?'),
+  EQUALS: tokenRule('[=]'),
+  LBRACKET: tokenRule('\\['),
+  RBRACKET: tokenRule('\\]'),
+  EOL: tokenRule('$'),
+};
+
 type IDUpdate = { id: string };
 type ClassUpdate = { class: string };
 // eslint-disable-next-line
@@ -152,58 +178,58 @@ export class Grammar {
   }
 
   KEY(): Rule {
-    return { token: '[a-zA-Z][a-zA-Z0-9]*' };
+    return TOKENS.KEY;
   }
   DVAL(): Rule {
-    return { token: '["][^"]*["]' };
+    return TOKENS.DVAL;
   }
   SVAL(): Rule {
-    return { token: "['][^']*[']" };
+    return TOKENS.SVAL;
   }
   NOTENAME(): Rule {
-    return { token: '[a-gA-G]' };
+    return TOKENS.NOTENAME;
   }
   OCTAVE(): Rule {
-    return { token: '[0-9]+' };
+    return TOKENS.OCTAVE;
   }
   ACCIDENTALS(): Rule {
-    return { token: 'bbs|bb|bss|bs|b|db|d|##|#|n|\\+\\+-|\\+-|\\+\\+|\\+|k|o' };
+    return TOKENS.ACCIDENTALS;
   }
   DURATIONS(): Rule {
-    return { token: '[0-9whq]+' };
+    return TOKENS.DURATIONS;
   }
   TYPES(): Rule {
-    return { token: '[rRsSxX]' };
+    return TOKENS.TYPES;
   }
   LPAREN(): Rule {
-    return { token: '[(]' };
+    return TOKENS.LPAREN;
   }
   RPAREN(): Rule {
-    return { token: '[)]' };
+    return TOKENS.RPAREN;
   }
   COMMA(): Rule {
-    return { token: '[,]' };
+    return TOKENS.COMMA;
   }
   DOT(): Rule {
-    return { token: '[.]' };
+    return TOKENS.DOT;
   }
   SLASH(): Rule {
-    return { token: '[/]' };
+    return TOKENS.SLASH;
   }
   MAYBESLASH(): Rule {
-    return { token: '[/]?' };
+    return TOKENS.MAYBESLASH;
   }
   EQUALS(): Rule {
-    return { token: '[=]' };
+    return TOKENS.EQUALS;
   }
   LBRACKET(): Rule {
-    return { token: '\\[' };
+    return TOKENS.LBRACKET;
   }
   RBRACKET(): Rule {
-    return { token: '\\]' };
+    return TOKENS.RBRACKET;
   }
   EOL(): Rule {
-    return { token: '$' };
+    return TOKENS.EOL;
   }
 }
 
