@@ -21,7 +21,6 @@ function L(...args: any[]): void {
   if (EasyScore.DEBUG) log('Vex.Flow.EasyScore', args);
 }
 
-
 function tokenRule(pattern: string): Rule {
   return { token: new RegExp(`^((${pattern})\\s*)`) };
 }

@@ -184,24 +184,28 @@ export class SVGContext implements RenderContext {
       weight = weight.replace(/ /g, '');
     }
     const noWeightProvided = typeof weight === 'undefined' || weight === '';
-    if (noWeightProvided) {
+    if (foundBold) {
+      weight = 'bold';
+    } else if (noWeightProvided) {
       weight = 'normal';
     }
 
-    const fontAttributes = {
-      'font-family': family,
-      'font-size': size + 'pt',
-      'font-weight': foundBold ? 'bold' : weight,
-      'font-style': foundItalic ? 'italic' : 'normal',
-    };
+    const style = foundItalic ? 'italic' : 'normal';
 
     // Store the font size so that if the browser is Internet
     // Explorer we can fix its calculations of text width.
     this.fontSize = Number(size);
+
     // Currently this.fontString only supports size & family. See setRawFont().
     this.fontString = `${size}pt ${family}`;
-    this.attributes = { ...this.attributes, ...fontAttributes };
-    this.state = { ...this.state, ...fontAttributes };
+    this.attributes['font-family'] = family;
+    this.attributes['font-size'] = size + 'pt';
+    this.attributes['font-weight'] = weight;
+    this.attributes['font-style'] = style;
+    this.state['font-family'] = family;
+    this.state['font-size'] = size + 'pt';
+    this.state['font-weight'] = weight;
+    this.state['font-style'] = style;
 
     return this;
   }
@@ -353,13 +357,10 @@ export class SVGContext implements RenderContext {
 
   applyAttributes(element: SVGElement, attributes: Attributes): SVGElement {
     const attrNamesToIgnore = attrNamesToIgnoreMap[element.nodeName];
-    Object.keys(attributes).forEach((propertyName) => {
-      if (attrNamesToIgnore && attrNamesToIgnore[propertyName]) {
-        return;
-      }
+    for (const propertyName of Object.keys(attributes)) {
+      if (attrNamesToIgnore && attrNamesToIgnore[propertyName]) continue;
       element.setAttributeNS(null, propertyName, attributes[propertyName]);
-    });
-
+    }
     return element;
   }
 
@@ -395,17 +396,17 @@ export class SVGContext implements RenderContext {
 
     // Create the rect & style it:
     const rectangle: SVGRectElement = this.create('rect') as SVGRectElement;
-    if (typeof attributes === 'undefined') {
-      attributes = {
-        fill: 'none',
-        'stroke-width': this.lineWidth,
-        stroke: 'black',
-      };
+    if (attributes !== undefined) {
+      this.applyAttributes(rectangle, attributes);
+    } else {
+      rectangle.setAttributeNS(null, 'fill', 'none');
+      rectangle.setAttributeNS(null, 'stroke-width', this.lineWidth.toString());
+      rectangle.setAttributeNS(null, 'stroke', 'black');
     }
-
-    attributes = { ...attributes, x, y, width, height };
-
-    this.applyAttributes(rectangle, attributes);
+    rectangle.setAttributeNS(null, 'x', x.toString());
+    rectangle.setAttributeNS(null, 'y', y.toString());
+    rectangle.setAttributeNS(null, 'width', width.toString());
+    rectangle.setAttributeNS(null, 'height', height.toString());
 
     this.add(rectangle);
     return this;
@@ -548,17 +549,13 @@ export class SVGContext implements RenderContext {
       const num_paths = sa.width / 2;
       // Stroke at varying widths to create effect of gaussian blur:
       for (let i = 1; i <= num_paths; i++) {
-        const attributes: Attributes = {
-          stroke: sa.color,
-          'stroke-linejoin': 'round',
-          'stroke-linecap': 'round',
-          'stroke-width': +(((sa.width * 0.4) / num_paths) * i).toFixed(3),
-          opacity: +((sa.opacity || 0.3) / num_paths).toFixed(3),
-        };
-
         const path = this.create('path');
-        attributes.d = this.path;
-        this.applyAttributes(path, attributes);
+        path.setAttributeNS(null, 'stroke', sa.color);
+        path.setAttributeNS(null, 'd', this.path);
+        path.setAttributeNS(null, 'stroke-linejoin', 'round');
+        path.setAttributeNS(null, 'stroke-linecap', 'round');
+        path.setAttributeNS(null, 'stroke-width', (((sa.width * 0.4) / num_paths) * i).toFixed(3));
+        path.setAttributeNS(null, 'opacity', ((sa.opacity || 0.3) / num_paths).toFixed(3));
         this.add(path);
       }
     }
@@ -570,13 +567,11 @@ export class SVGContext implements RenderContext {
     this.glow();
 
     const path = this.create('path');
-    if (typeof attributes === 'undefined') {
-      attributes = { ...this.attributes, stroke: 'none' };
+    this.applyAttributes(path, attributes || this.attributes);
+    if (attributes === undefined) {
+      path.setAttributeNS(null, 'stroke', 'none');
     }
-
-    attributes.d = this.path;
-
-    this.applyAttributes(path, attributes);
+    path.setAttributeNS(null, 'd', this.path);
     this.add(path);
     return this;
   }
@@ -586,14 +581,9 @@ export class SVGContext implements RenderContext {
     this.glow();
 
     const path = this.create('path');
-    const attributes: Attributes = {
-      ...this.attributes,
-      fill: 'none',
-      'stroke-width': this.lineWidth,
-      d: this.path,
-    };
-
-    this.applyAttributes(path, attributes);
+    path.setAttributeNS(null, 'fill', 'none');
+    path.setAttributeNS(null, 'stroke-width', this.lineWidth.toString());
+    path.setAttributeNS(null, 'd', this.path);
     this.add(path);
     return this;
   }
@@ -650,16 +640,12 @@ export class SVGContext implements RenderContext {
     if (!text || text.length <= 0) {
       return this;
     }
-    const attributes: Attributes = {
-      ...this.attributes,
-      stroke: 'none',
-      x,
-      y,
-    };
-
     const txt = this.create('text');
     txt.textContent = text;
-    this.applyAttributes(txt, attributes);
+    this.applyAttributes(txt, this.attributes);
+    txt.setAttributeNS(null, 'stroke', 'none');
+    txt.setAttributeNS(null, 'x', x.toString());
+    txt.setAttributeNS(null, 'y', y.toString());
     this.add(txt);
     return this;
   }

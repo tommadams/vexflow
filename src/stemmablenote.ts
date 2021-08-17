@@ -133,7 +133,7 @@ export abstract class StemmableNote extends Note {
 
       // Get the font-specific customizations for the note heads.
       const noteHeadMetrics = this.musicFont.getMetrics().stem?.noteHead;
-      let offsets = noteHeadMetrics ? noteHeadMetrics[glyph.code_head] : undefined
+      const offsets = noteHeadMetrics ? noteHeadMetrics[glyph.code_head] : undefined;
 
       if (offsets !== undefined) {
         // Configure the stem to use these offsets.
