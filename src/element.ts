@@ -46,7 +46,7 @@ export abstract class Element {
   protected fontStack!: Font[];
   protected musicFont!: Font;
 
-  protected static newID(): string {
+  static newID(): string {
     return `auto${Element.ID++}`;
   }
 

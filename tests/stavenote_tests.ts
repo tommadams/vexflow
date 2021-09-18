@@ -392,11 +392,13 @@ function drawBasic(options: TestOptions, contextBuilder: ContextBuilder): void {
   ];
   expect(note_structs.length * 2);
 
-  const colorDescendants = (parentItem: SVGElement, color: string) => () =>
-    parentItem.querySelectorAll('*').forEach((child) => {
+  const colorDescendants = (id: string, color: string) => () => {
+    const elem = document.getElementById('vf-' + id);
+    elem.querySelectorAll('*').forEach((child) => {
       child.setAttribute('fill', color);
       child.setAttribute('stroke', color);
     });
+  };
 
   for (let i = 0; i < note_structs.length; ++i) {
     const note = draw(staveNote(note_structs[i]), stave, ctx, (i + 1) * 25);
@@ -404,8 +406,9 @@ function drawBasic(options: TestOptions, contextBuilder: ContextBuilder): void {
     // If this is an interactivity test (ui: true), then attach mouseover & mouseout handlers to the notes.
     if (options.params.ui) {
       const item = note.getAttribute('el') as SVGElement;
-      item.addEventListener('mouseover', colorDescendants(item, 'green'), false);
-      item.addEventListener('mouseout', colorDescendants(item, 'black'), false);
+      const id = note.getAttribute('id') as string;
+      item.addEventListener('mouseover', colorDescendants(id, 'green'), false);
+      item.addEventListener('mouseout', colorDescendants(id, 'black'), false);
     }
     ok(note.getX() > 0, 'Note ' + i + ' has X value');
     ok(note.getYs().length > 0, 'Note ' + i + ' has Y values');

@@ -99,6 +99,8 @@ export interface RenderContext {
 
   /** Maintain compatibility with the CanvasRenderingContext2D API. */
   strokeStyle: string | CanvasGradient | CanvasPattern;
+
+  finish(): void;
 }
 
 export interface TieNotes {

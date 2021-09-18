@@ -267,4 +267,6 @@ export class CanvasContext implements RenderContext {
   get strokeStyle(): string | CanvasGradient | CanvasPattern {
     return this.vexFlowCanvasContext.strokeStyle;
   }
+
+  finish(): void {}
 }

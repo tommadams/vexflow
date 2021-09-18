@@ -89,7 +89,7 @@ function random(options: TestOptions): void {
     elementType = '&lt;canvas&gt; element object';
   } else {
     // If the backend is SVG, we draw a border around the SVG child of the DIV.
-    element.children[0].style.border = borderStyle;
+    // element.children[0].style.border = borderStyle;
     elementType = '&lt;svg&gt; element object';
   }
 

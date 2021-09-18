@@ -243,6 +243,7 @@ class VexFlowTests {
         const options: TestOptions = { elementId, params, assert, backend };
         const isSVG = backend === Renderer.Backends.SVG;
         const contextBuilder: ContextBuilder = isSVG ? Renderer.getSVGContext : Renderer.getCanvasContext;
+        // debugger
         testFunc(options, contextBuilder);
         restoreOriginalFontStack();
         if (helper) helper(fontStackName, element);

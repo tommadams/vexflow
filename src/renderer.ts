@@ -2,7 +2,7 @@
 // MIT License
 
 import { CanvasContext } from './canvascontext';
-import { SVGContext } from './svgcontext';
+import { SVGContext, SVGLiteContext } from './svgcontext';
 import { RenderContext } from './types/common';
 import { RuntimeError } from './util';
 
@@ -131,6 +131,7 @@ export class Renderer {
       this.ctx = new CanvasContext(canvasElement.getContext('2d')!);
     } else if (this.backend === Renderer.Backends.SVG) {
       this.ctx = new SVGContext(this.element);
+      // this.ctx = new SVGLiteContext(this.element);
     } else {
       throw new RuntimeError('InvalidBackend', `No support for backend: ${this.backend}`);
     }

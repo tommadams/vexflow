@@ -724,6 +724,8 @@ export class Factory {
       if (!i.isRendered()) i.setContext(this.context).draw();
     });
     this.systems.forEach((i) => i.setContext(this.context).draw());
+    // debugger
+    this.context.finish();
     this.reset();
   }
 }
