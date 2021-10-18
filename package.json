@@ -17,6 +17,7 @@
     "url": "https://github.com/0xfe/vexflow/issues"
   },
   "devDependencies": {
+    "@types/offscreencanvas": "^2019.6.4",
     "@typescript-eslint/eslint-plugin": "^4.31.0",
     "@typescript-eslint/parser": "^4.31.0",
     "canvas": "^2.8.0",

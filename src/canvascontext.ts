@@ -1,12 +1,20 @@
 // [VexFlow](http://vexflow.com) - Copyright (c) Mohit Muthanna 2010.
 // MIT License
 import { GroupAttributes, RenderContext, TextMeasure } from './rendercontext';
+import { getSingletonTextMeasurer, TextMeasurer } from './textmeasurer';
 import { warn } from './util';
+
+interface Options {
+  // Defaults to a singleton measurer shared by all instances.
+  textMeasurer: TextMeasurer;
+}
 
 /**
  * A rendering context for the Canvas backend (CanvasRenderingContext2D).
  */
 export class CanvasContext extends RenderContext {
+  private options: Options;
+
   vexFlowCanvasContext: CanvasRenderingContext2D;
   canvas: HTMLCanvasElement | { width: number; height: number };
   background_fillStyle?: string;
@@ -41,8 +49,12 @@ export class CanvasContext extends RenderContext {
   /**
    * @param context
    */
-  constructor(context: CanvasRenderingContext2D) {
+  constructor(context: CanvasRenderingContext2D, options: Partial<Options> = {}) {
     super();
+
+    this.options = {
+      textMeasurer: options.textMeasurer || getSingletonTextMeasurer(),
+    };
 
     // Use a name that is unlikely to clash with a canvas context property.
     this.vexFlowCanvasContext = context;

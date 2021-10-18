@@ -53,6 +53,7 @@ import { TabSlideTests } from './tabslide_tests';
 import { TabStaveTests } from './tabstave_tests';
 import { TabTieTests } from './tabtie_tests';
 import { TextBracketTests } from './textbracket_tests';
+import { TextMeasurerTests } from './textmeasurer_tests';
 import { TextNoteTests } from './textnote_tests';
 import { ThreeVoicesTests } from './threevoice_tests';
 import { TickContextTests } from './tickcontext_tests';
@@ -121,6 +122,7 @@ VexFlowTests.run = function () {
   TabStaveTests.Start();
   TabTieTests.Start();
   TextBracketTests.Start();
+  TextMeasurerTests.Start();
   TextNoteTests.Start();
   ThreeVoicesTests.Start();
   TickContextTests.Start();
