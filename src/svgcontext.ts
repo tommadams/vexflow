@@ -45,7 +45,7 @@ interface State {
 }
 
 interface Options {
-  // Defaults to a singleton measurer shared by all instances.
+  // Defaults to a singleton text measurer shared by all context instances.
   textMeasurer: TextMeasurer;
 }
 
