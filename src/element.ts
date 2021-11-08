@@ -39,7 +39,7 @@ export abstract class Element {
   }
 
   protected static ID: number = 1000;
-  protected static newID(): string {
+  static newID(): string {
     return `auto${Element.ID++}`;
   }
 

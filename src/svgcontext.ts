@@ -2,6 +2,7 @@
 // MIT License
 // @author Gregory Ristow (2015)
 
+import { Element } from './element';
 import { RuntimeError, normalizeAngle, prefix } from './util';
 import { GroupAttributes, RenderContext, TextMeasure } from './rendercontext';
 import { getSingletonTextMeasurer, TextMeasurer } from './textmeasurer';
@@ -44,19 +45,31 @@ interface State {
   lineWidth: number;
 }
 
+type EventListener = (ev: any) => any;
+
+interface Elem {
+  nodeName: string;
+  textContent: string | null;
+
+  appendChild(newChild: any): any;
+  setAttribute(name: string, value: string): void;
+  setAttributeNS(ns: string | null, name: string, value: string): void;
+  addEventListener(type: string, listener: EventListener): void;
+}
+
 interface Options {
   // Defaults to a singleton text measurer shared by all context instances.
   textMeasurer: TextMeasurer;
 }
 
 /**
- * SVG rendering context with an API similar to CanvasRenderingContext2D.
+ * Base SVG render context that implements most of the shared functionality
+ * used by SVGContext and SVGTextContext.
  */
-export class SVGContext extends RenderContext {
-  private options: Options;
+abstract class SVGContextBase extends RenderContext {
+  protected options: Options;
+  protected root: Elem;
 
-  element: HTMLElement; // the parent DOM object
-  svg: SVGSVGElement;
   width: number = 0;
   height: number = 0;
   path: string;
@@ -67,27 +80,22 @@ export class SVGContext extends RenderContext {
   shadow_attributes: Attributes;
   state: Attributes;
   state_stack: State[];
-  parent: SVGGElement;
-  groups: SVGGElement[];
+  parent: Elem;
+  groups: Elem[];
   fontString: string = '';
 
-  constructor(element: HTMLElement, options: Partial<Options> = {}) {
+  constructor(root: Elem, options: Partial<Options>) {
     super();
-
-    this.element = element;
-
-    const svg = this.create('svg');
-    // Add it to the canvas:
-    this.element.appendChild(svg);
 
     this.options = {
       textMeasurer: options.textMeasurer || getSingletonTextMeasurer(),
     };
 
+    this.root = root;
+
     // Point to it:
-    this.svg = svg;
-    this.groups = [this.svg]; // Create the group stack
-    this.parent = this.svg;
+    this.groups = [this.root]; // Create the group stack
+    this.parent = this.root;
 
     this.path = '';
     this.pen = { x: NaN, y: NaN };
@@ -129,24 +137,10 @@ export class SVGContext extends RenderContext {
     this.state_stack = [];
   }
 
-  /**
-   * Use one of the overload signatures to create an SVG element of a specific type.
-   * The last overload accepts an arbitrary string, and is identical to the
-   * implementation signature.
-   * Feel free to add new overloads for other SVG element types as required.
-   */
-  create(svgElementType: 'g'): SVGGElement;
-  create(svgElementType: 'path'): SVGPathElement;
-  create(svgElementType: 'rect'): SVGRectElement;
-  create(svgElementType: 'svg'): SVGSVGElement;
-  create(svgElementType: 'text'): SVGTextElement;
-  create(svgElementType: string): SVGElement;
-  create(svgElementType: string): SVGElement {
-    return document.createElementNS(SVG_NS, svgElementType);
-  }
+  abstract create(svgElementType: string): Elem;
 
   // Allow grouping elements in containers for interactivity.
-  openGroup(cls: string, id?: string, attrs?: GroupAttributes): SVGGElement {
+  openGroup(cls: string, id?: string, attrs?: GroupAttributes): Elem {
     const group = this.create('g');
     this.groups.push(group);
     this.parent.appendChild(group);
@@ -165,7 +159,7 @@ export class SVGContext extends RenderContext {
     this.parent = this.groups[this.groups.length - 1];
   }
 
-  add(elem: SVGElement): void {
+  add(elem: Elem): void {
     this.parent.appendChild(elem);
   }
 
@@ -297,27 +291,7 @@ export class SVGContext extends RenderContext {
 
   // ### Sizing & Scaling Methods:
 
-  // TODO (GCR): See note at scale() -- separate our internal
-  // conception of pixel-based width/height from the style.width
-  // and style.height properties eventually to allow users to
-  // apply responsive sizing attributes to the SVG.
-  resize(width: number, height: number): this {
-    this.width = width;
-    this.height = height;
-    this.element.style.width = width.toString();
-
-    this.svg.style.width = width.toString();
-    this.svg.style.height = height.toString();
-
-    const attributes = {
-      width,
-      height,
-    };
-
-    this.applyAttributes(this.svg, attributes);
-    this.scale(this.state.scale.x, this.state.scale.y);
-    return this;
-  }
+  abstract resize(width: number, height: number): this;
 
   scale(x: number, y: number): this {
     // uses viewBox to scale
@@ -346,47 +320,30 @@ export class SVGContext extends RenderContext {
    */
   setViewBox(viewBox_or_minX: string | number, minY?: number, width?: number, height?: number): void {
     if (typeof viewBox_or_minX === 'string') {
-      this.svg.setAttribute('viewBox', viewBox_or_minX);
+      this.root.setAttribute('viewBox', viewBox_or_minX);
     } else {
       const viewBoxString = viewBox_or_minX + ' ' + minY + ' ' + width + ' ' + height;
-      this.svg.setAttribute('viewBox', viewBoxString);
+      this.root.setAttribute('viewBox', viewBoxString);
     }
   }
 
   // ### Drawing helper methods:
 
-  applyAttributes(element: SVGElement, attributes: Attributes): SVGElement {
+  applyAttributes(element: Elem, attributes: Attributes): Elem {
     const attrNamesToIgnore = attrNamesToIgnoreMap[element.nodeName];
-    Object.keys(attributes).forEach((propertyName) => {
+    for (const propertyName of Object.keys(attributes)) {
       if (attrNamesToIgnore && attrNamesToIgnore[propertyName]) {
-        return;
+        continue;
       }
       element.setAttributeNS(null, propertyName, attributes[propertyName]);
-    });
+    }
 
     return element;
   }
 
   // ### Shape & Path Methods:
 
-  clear(): void {
-    // Clear the SVG by removing all inner children.
-
-    // (This approach is usually slightly more efficient
-    // than removing the old SVG & adding a new one to
-    // the container element, since it does not cause the
-    // container to resize twice.  Also, the resize
-    // triggered by removing the entire SVG can trigger
-    // a touchcancel event when the element resizes away
-    // from a touch point.)
-
-    while (this.svg.lastChild) {
-      this.svg.removeChild(this.svg.lastChild);
-    }
-
-    // Replace the viewbox attribute we just removed:
-    this.scale(this.state.scale.x, this.state.scale.y);
-  }
+  abstract clear(): void;
 
   // ## Rectangles:
   rect(x: number, y: number, width: number, height: number, attributes?: Attributes): this {
@@ -675,5 +632,188 @@ export class SVGContext extends RenderContext {
 
   get strokeStyle(): string | CanvasGradient | CanvasPattern {
     return this.attributes.stroke;
+  }
+}
+
+/**
+ * SVG rendering context with an API similar to CanvasRenderingContext2D.
+ */
+export class SVGContext extends SVGContextBase {
+  svg: SVGSVGElement;
+
+  element: HTMLElement; // the parent DOM object
+
+  constructor(element: HTMLElement, options: Partial<Options> = {}) {
+    const svg = document.createElementNS(SVG_NS, 'svg');
+    super(svg, options);
+    this.element = element;
+    this.element.appendChild(svg);
+    this.svg = svg;
+  }
+
+  create(svgElementType: string): Elem {
+    return document.createElementNS(SVG_NS, svgElementType);
+  }
+
+  clear(): void {
+    // Clear the SVG by removing all inner children.
+
+    // (This approach is usually slightly more efficient
+    // than removing the old SVG & adding a new one to
+    // the container element, since it does not cause the
+    // container to resize twice.  Also, the resize
+    // triggered by removing the entire SVG can trigger
+    // a touchcancel event when the element resizes away
+    // from a touch point.)
+
+    while (this.svg.lastChild) {
+      this.svg.removeChild(this.svg.lastChild);
+    }
+
+    // Replace the viewbox attribute we just removed:
+    this.scale(this.state.scale.x, this.state.scale.y);
+  }
+
+  // TODO (GCR): See note at scale() -- separate our internal
+  // conception of pixel-based width/height from the style.width
+  // and style.height properties eventually to allow users to
+  // apply responsive sizing attributes to the SVG.
+  resize(width: number, height: number): this {
+    this.width = width;
+    this.height = height;
+    this.element.style.width = width.toString();
+
+    this.svg.style.width = width.toString();
+    this.svg.style.height = height.toString();
+
+    const attributes = {
+      width,
+      height,
+    };
+
+    this.applyAttributes(this.root, attributes);
+    this.scale(this.state.scale.x, this.state.scale.y);
+    return this;
+  }
+}
+
+type EventListenerMap = Record<string, [string, EventListener][]>;
+
+class TextElem implements Elem {
+  attributes: Record<string, string> = {};
+  style: Record<string, string> = {};
+  children: TextElem[] = [];
+  textContent: string = '';
+  eventListeners: [string, EventListener][] = [];
+
+  constructor(public nodeName: string) {}
+
+  appendChild(newChild: TextElem): TextElem {
+    this.children.push(newChild);
+    return newChild;
+  }
+
+  setAttribute(name: string, value: string): void {
+    this.attributes[name] = value;
+  }
+
+  setAttributeNS(ns: string | null, name: string, value: string): void {
+    // We can just ignore the namespace for our purposes.
+    this.attributes[name] = value;
+  }
+
+  clear() {
+    this.attributes = {};
+    this.style = {};
+    this.children = [];
+    this.textContent = '';
+  }
+
+  addEventListener(type: string, listener: EventListener): void {
+    this.eventListeners.push([type, listener]);
+  }
+
+  toString(currIndent: string, indent: string, eventListeners?: EventListenerMap): string {
+    let result = `${currIndent}<${this.nodeName}`;
+    for (const [key, value] of Object.entries(this.attributes)) {
+      result += ` ${key}="${value}"`;
+    }
+
+    if (eventListeners && this.eventListeners.length > 0) {
+      let id = this.attributes.id;
+      if (id === undefined) {
+        id = Element.newID();
+        result += ` id="${id}"`;
+      }
+      eventListeners[id] = this.eventListeners;
+    }
+
+    if (!this.children) {
+      result += `>${this.textContent}</${this.nodeName}>\n`;
+    } else {
+      result += `>${this.textContent}\n`;
+      const childIndent = currIndent + indent;
+      for (const child of this.children) {
+        result += child.toString(childIndent, indent, eventListeners);
+      }
+      result += `${indent}</${this.nodeName}>\n`;
+    }
+    return result;
+  }
+}
+
+export class SVGTextContext extends SVGContextBase {
+  private svg: TextElem;
+
+  constructor(options: Partial<Options> = {}) {
+    const svg = new TextElem('svg');
+    super(svg, options);
+    this.svg = svg;
+  }
+
+  create(svgElementType: string): Elem {
+    return new TextElem(svgElementType);
+  }
+
+  clear(): void {
+    this.svg.clear();
+
+    // Replace the viewbox attribute we just removed:
+    this.scale(this.state.scale.x, this.state.scale.y);
+  }
+
+  resize(width: number, height: number): this {
+    this.width = width;
+    this.height = height;
+
+    this.svg.style.width = width.toString();
+    this.svg.style.height = height.toString();
+
+    const attributes = {
+      width,
+      height,
+    };
+
+    this.applyAttributes(this.root, attributes);
+    this.scale(this.state.scale.x, this.state.scale.y);
+    return this;
+  }
+
+  toString(indent: string = '', eventListeners?: EventListenerMap): string {
+    return this.svg.toString('', indent, eventListeners);
+  }
+
+  toElement(element: HTMLElement): void {
+    const eventListeners: EventListenerMap = {};
+    element.innerHTML = this.toString('', eventListeners);
+    for (const [id, listeners] of Object.entries(eventListeners)) {
+      const target = element.querySelector('#' + id);
+      if (target == null) {
+        continue;
+      }
+      for (const [type, listener] of listeners) {
+        target.addEventListener(type, listener);
+      }
+    }
   }
 }

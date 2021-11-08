@@ -168,7 +168,7 @@ function passRenderContext(options: TestOptions): void {
   if (element instanceof window.HTMLCanvasElement) {
     const ctx = element.getContext('2d');
     if (!ctx) {
-      throw new RuntimeError(`Couldn't get context from element "${options.elemendId}"`);
+      throw new RuntimeError(`Couldn't get context from element "${options.elementId}"`);
     }
     context = new CanvasContext(ctx);
   } else {
